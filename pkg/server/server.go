@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"sync"
+	"time"
 	"website-verification/pkg/conf"
 	"website-verification/pkg/middleware"
 
@@ -11,12 +12,16 @@ import (
 )
 
 type Verificationer struct {
-	ch chan struct{}
+	ch         chan struct{}
+	httpClient *http.Client
 }
 
 func NewVerificationer() (*Verificationer, error) {
 	return &Verificationer{
 		ch: make(chan struct{}, conf.Get().Concurrent),
+		httpClient: &http.Client{
+			Timeout: time.Duration(conf.Get().TimeoutSecond) * time.Second,
+		},
 	}, nil
 }
 
@@ -56,7 +61,7 @@ func (srv *Verificationer) verificationUrl(url string, wg *sync.WaitGroup) {
 		<-srv.ch
 	}()
 
-	resp, err := http.Get(url)
+	resp, err := srv.httpClient.Get(url)
 	if err != nil {
 		logrus.Errorf("请求处理失败: %v 网址: %s", err, url)
 		return

@@ -19,7 +19,8 @@ ENV GIN_MODE=release    \
     MQ_USER="rabbit"    \
     MQ_PWD="123456"     \
     MQ_QUEUE="test"     \
-    CONCURRENT=100
+    CONCURRENT=100      \
+    TIME_OUT_SECOND=10
 
 # 在build阶段复制时区到
 COPY --from=build /go/release/dist/website-verification /website-verification
