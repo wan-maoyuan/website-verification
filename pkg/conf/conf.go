@@ -19,7 +19,7 @@ type Conf struct {
 	MQUser     string `mapstructure:"MQ_USER"`
 	MQPwd      string `mapstructure:"MQ_PWD"`
 	MQQueue    string `mapstructure:"MQ_QUEUE"`
-	Concurrent int    `mapstructure:"CONCURRENT"`
+	Concurrent uint   `mapstructure:"CONCURRENT"`
 	Log        Log    `mapstructure:"LOG"`
 }
 
@@ -31,7 +31,7 @@ func New() *Conf {
 	config.MQUser = viper.GetString("MQ_USER")
 	config.MQPwd = viper.GetString("MQ_PWD")
 	config.MQQueue = viper.GetString("MQ_QUEUE")
-	config.Concurrent = viper.GetInt("CONCURRENT")
+	config.Concurrent = viper.GetUint("CONCURRENT")
 
 	config.Log.File = viper.GetString("LOG_FILE")
 	config.Log.Level = viper.GetString("LOG_LEVEL")

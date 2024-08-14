@@ -1,0 +1,12 @@
+version: '3.1'
+services:
+  rabbitmq:
+    image: website-verification:v0.0.1
+    container_name: website-verification
+    environment:
+      MQ_HOST: "127.0.0.1"
+      MQ_PORT: "5672"
+      MQ_USER: "rabbit"
+      MQ_PWD: "123456"
+      MQ_QUEUE: "test"
+      CONCURRENT: 100
