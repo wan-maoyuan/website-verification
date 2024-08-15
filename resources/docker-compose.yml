@@ -4,10 +4,11 @@ services:
     image: website-verification:v0.0.1
     container_name: website-verification
     environment:
-      MQ_HOST: "127.0.0.1"
-      MQ_PORT: "5672"
-      MQ_USER: "rabbit"
-      MQ_PWD: "123456"
+      MQ_URI: "amqp://rabbit:123456@127.0.0.1:5672/"
       MQ_QUEUE: "test"
       CONCURRENT: 100
       TIME_OUT_SECOND: 10
+      LOG_FILE: ""
+      LOG_LEVEL: "info"
+      LOG_SIZE: 100
+      LOG_AGE: 100

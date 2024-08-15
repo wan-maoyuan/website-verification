@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"website-verification/pkg/conf"
 
@@ -20,8 +21,7 @@ type Rabbit struct {
 func InitRabbitmq() (err error) {
 	config := conf.Get()
 
-	url := fmt.Sprintf("amqp://%s:%s@%s:%s/", config.MQUser, config.MQPwd, config.MQHost, config.MQPort)
-	mq.conn, err = amqp.Dial(url)
+	mq.conn, err = amqp.Dial(config.MQURI)
 	if err != nil {
 		return fmt.Errorf("连接 rabbitmq 服务器失败: %v", err)
 	}
@@ -34,6 +34,10 @@ func InitRabbitmq() (err error) {
 	mq.messageChan = make(chan string)
 
 	return nil
+}
+
+type Message struct {
+	Url string `json:"url"`
 }
 
 func GetTaskMessage(ctx context.Context) (<-chan string, error) {
@@ -58,15 +62,60 @@ func GetTaskMessage(ctx context.Context) (<-chan string, error) {
 				logrus.Infof("停止监听 rabbit mq 消息队列: %s", conf.Get().MQQueue)
 				return
 			case message := <-deliveryChan:
-				url := string(message.Body)
-				mq.messageChan <- url
+				var info = new(Message)
 
-				logrus.Debugf("从 rabbitmq 队列中收到一个信息: %s", url)
+				if err := json.Unmarshal(message.Body, &info); err != nil {
+					logrus.Errorf("rabbit mq 消息: %s 解析URL失败: %v", string(message.Body), err)
+					continue
+				}
+
+				mq.messageChan <- info.Url
+				logrus.Debugf("从 rabbitmq 队列中收到一个信息: %s", info.Url)
 			}
 		}
 	}()
 
 	return mq.messageChan, nil
+}
+
+func SendMessage(msgChan chan Message) error {
+	publishQueue, err := mq.channel.QueueDeclare(
+		conf.Get().MQQueue, // 队列名
+		true,               // 是否持续
+		true,               // 是否自动删除
+		false,              // 是否独占
+		false,              // 是否阻塞
+		nil,                // args
+	)
+
+	if err != nil {
+		return fmt.Errorf("获取 rabbit_mq 发布通道失败: %v", err)
+	}
+
+	for msg := range msgChan {
+		body, err := json.Marshal(msg)
+		if err != nil {
+			logrus.Errorf("解析 Message 结构体 to json 失败: %v", err)
+			continue
+		}
+
+		err = mq.channel.Publish(
+			"",                // 交换机的名称
+			publishQueue.Name, // 需要发送的消息队列
+			false,             // 消息发送失败是否需要收到回复
+			false,             // 设置为true，当消息无法直接投递到消费者时，会返回一个Basic.Return消息给生产者。如果设置为false，则消息会被存储在队列中，等待消费者连接。
+			amqp.Publishing{
+				ContentType: "application/json",
+				Body:        body,
+			})
+
+		if err != nil {
+			logrus.Errorf("往 rabbit_mq 发送消息: %s 失败: %v", string(body), err)
+			continue
+		}
+	}
+
+	return nil
 }
 
 func CloseRabbitmq() {

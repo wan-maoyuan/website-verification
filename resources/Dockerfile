@@ -13,13 +13,13 @@ RUN GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -o ./dist/website-verificatio
 # 构建镜像
 FROM alpine:3.20 as prod
 
-ENV GIN_MODE=release    \
-    MQ_HOST="127.0.0.1" \
-    MQ_PORT="5672"      \
-    MQ_USER="rabbit"    \
-    MQ_PWD="123456"     \
-    MQ_QUEUE="test"     \
-    CONCURRENT=100      \
+ENV MQ_URI="amqp://rabbit:123456@127.0.0.1:5672/"   \
+    MQ_QUEUE="test"                                 \
+    LOG_FILE=""                                     \
+    LOG_LEVEL="info"                                \
+    LOG_SIZE=100                                    \
+    LOG_AGE=100                                     \
+    CONCURRENT=100                                  \
     TIME_OUT_SECOND=10
 
 # 在build阶段复制时区到

@@ -3,8 +3,8 @@ package global
 const (
 	// 日志配置
 	DefaultLevel      = "info"
-	DefaultMaxLogSize = 10
-	DefaultMaxLogAge  = 7
+	DefaultMaxLogSize = 100
+	DefaultMaxLogAge  = 100
 	DefaultMaxBackups = 5
 
 	MaxRetryCount     = 3
