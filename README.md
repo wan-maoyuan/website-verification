@@ -71,7 +71,7 @@ services:
 docker-compose -f resources/docker-compose.yml up -d
 ```
 
-- 启动 `docker` 容器
+- 停止 `docker` 容器
 ```shell
 docker-compose -f resources/docker-compose.yml down
 ```
