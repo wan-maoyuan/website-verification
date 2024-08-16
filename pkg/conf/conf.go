@@ -29,12 +29,13 @@ func New() *Conf {
 	config.Concurrent = viper.GetUint("CONCURRENT")
 	config.TimeoutSecond = viper.GetUint("TIME_OUT_SECOND")
 
+	config.Log = NewLog()
+
 	config.Log.File = viper.GetString("LOG_FILE")
 	config.Log.Level = viper.GetString("LOG_LEVEL")
 	config.Log.MaxSize = viper.GetInt("LOG_SIZE")
 	config.Log.MaxAge = viper.GetInt("LOG_AGE")
 
-	config.Log = NewLog()
 	config.Log.InitLog()
 
 	return config
