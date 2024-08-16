@@ -14,11 +14,12 @@ func Get() *Conf {
 }
 
 type Conf struct {
-	MQURI         string `mapstructure:"MQ_URI"`
-	MQQueue       string `mapstructure:"MQ_QUEUE"`
-	Concurrent    uint   `mapstructure:"CONCURRENT"`
-	TimeoutSecond uint   `mapstructure:"TIME_OUT_SECOND"`
-	Log           Log    `mapstructure:"LOG"`
+	MQURI                    string `mapstructure:"MQ_URI"`
+	MQQueue                  string `mapstructure:"MQ_QUEUE"`
+	Concurrent               uint   `mapstructure:"CONCURRENT"`
+	TimeoutSecond            uint   `mapstructure:"TIME_OUT_SECOND"`
+	StatisticsIntervalMinute uint   `mapstructure:"STATISTICS_INTERVAL_MINUTE"`
+	Log                      Log    `mapstructure:"LOG"`
 }
 
 func New() *Conf {
@@ -28,6 +29,7 @@ func New() *Conf {
 	config.MQQueue = viper.GetString("MQ_QUEUE")
 	config.Concurrent = viper.GetUint("CONCURRENT")
 	config.TimeoutSecond = viper.GetUint("TIME_OUT_SECOND")
+	config.StatisticsIntervalMinute = viper.GetUint("STATISTICS_INTERVAL_MINUTE")
 
 	config.Log = NewLog()
 

@@ -20,7 +20,8 @@ ENV MQ_URI="amqp://rabbit:123456@127.0.0.1:5672/"   \
     LOG_SIZE=100                                    \
     LOG_AGE=100                                     \
     CONCURRENT=100                                  \
-    TIME_OUT_SECOND=10
+    TIME_OUT_SECOND=10                              \
+    STATISTICS_INTERVAL_MINUTE=5
 
 # 在build阶段复制时区到
 COPY --from=build /go/release/dist/website-verification /website-verification

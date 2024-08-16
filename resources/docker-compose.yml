@@ -8,6 +8,7 @@ services:
       MQ_QUEUE: "test"
       CONCURRENT: 100
       TIME_OUT_SECOND: 10
+      STATISTICS_INTERVAL_MINUTE: 5
       LOG_FILE: ""
       LOG_LEVEL: "info"
       LOG_SIZE: 100

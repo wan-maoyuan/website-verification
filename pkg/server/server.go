@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 	"website-verification/pkg/conf"
@@ -16,6 +16,7 @@ import (
 type Verificationer struct {
 	ch         chan struct{}
 	httpClient *http.Client
+	counter    *AtomicCounter
 }
 
 func NewVerificationer() (*Verificationer, error) {
@@ -24,10 +25,14 @@ func NewVerificationer() (*Verificationer, error) {
 		httpClient: &http.Client{
 			Timeout: time.Duration(conf.Get().TimeoutSecond) * time.Second,
 		},
+		counter: NewAtomicCounter(),
 	}, nil
 }
 
 func (srv *Verificationer) Run(ctx context.Context) error {
+	// 启动计数器
+	go srv.counter.Run(ctx)
+
 	ch, err := middleware.GetTaskMessage(ctx)
 	if err != nil {
 		return err
@@ -41,8 +46,10 @@ a:
 		case <-ctx.Done():
 			logrus.Info("程序停止运行")
 			break a
-		case urlStr := <-ch:
-			srv.handlerUrl(urlStr, wg)
+		case message := <-ch:
+			if message != nil {
+				srv.handlerUrl(message, wg)
+			}
 		}
 	}
 
@@ -50,47 +57,32 @@ a:
 	return nil
 }
 
-func (srv *Verificationer) handlerUrl(urlStr string, wg *sync.WaitGroup) {
+func (srv *Verificationer) handlerUrl(message *middleware.Message, wg *sync.WaitGroup) {
 	srv.ch <- struct{}{}
 	wg.Add(1)
 
-	go srv.verificationUrl(urlStr, wg)
+	go srv.verificationUrl(message, wg)
 }
 
-func (srv *Verificationer) verificationUrl(urlStr string, wg *sync.WaitGroup) {
+func (srv *Verificationer) verificationUrl(message *middleware.Message, wg *sync.WaitGroup) {
 	defer func() {
 		wg.Done()
 		<-srv.ch
 	}()
 
-	resp, err := srv.httpClient.Get(encodingUrl(urlStr))
+	urlStr := fmt.Sprintf("%s&ua=%s", message.Url, url.QueryEscape(message.UA))
+	resp, err := srv.httpClient.Get(urlStr)
 	if err != nil {
-		logrus.Errorf("请求处理失败: %v 网址: %s", err, urlStr)
+		logrus.Errorf("请求处理失败: %v 网址: %s ua: %s", err, message.Url, message.UA)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < http.StatusMultipleChoices {
-		logrus.Debugf("请求处理成功，网址: %s", urlStr)
+		srv.counter.AddSucces()
+		logrus.Debugf("请求处理成功，网址: %s ua: %s", message.Url, message.UA)
 	} else {
-		logrus.Errorf("请求处理失败: %v 网址: %s 网址状态响应码: %d", err, urlStr, resp.StatusCode)
+		srv.counter.AddFail()
+		logrus.Errorf("请求处理失败: %v 网址: %s ua: %s 网址状态响应码: %d", err, message.Url, message.UA, resp.StatusCode)
 	}
-}
-
-// 对 URL 进行编码
-func encodingUrl(urlStr string) string {
-	// 查找第一个问号的位置
-	index := strings.Index(urlStr, "?")
-	if index == -1 {
-		// 不包含参数，不需要进行 url 编码
-		return urlStr
-	}
-
-	// 基础URL地址
-	baseUrl := urlStr[:index] + "?"
-
-	// 截取问号后面的部分
-	paramStr := url.QueryEscape(urlStr[index+1:])
-
-	return baseUrl + paramStr
 }

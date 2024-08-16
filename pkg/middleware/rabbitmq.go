@@ -15,7 +15,7 @@ var mq = Rabbit{}
 type Rabbit struct {
 	conn        *amqp.Connection
 	channel     *amqp.Channel
-	messageChan chan string
+	messageChan chan *Message
 }
 
 func InitRabbitmq() (err error) {
@@ -31,16 +31,17 @@ func InitRabbitmq() (err error) {
 		return fmt.Errorf("创建一个 rabbitmq 连接通道失败: %v", err)
 	}
 
-	mq.messageChan = make(chan string)
+	mq.messageChan = make(chan *Message)
 
 	return nil
 }
 
 type Message struct {
 	Url string `json:"url"`
+	UA  string `json:"ua"`
 }
 
-func GetTaskMessage(ctx context.Context) (<-chan string, error) {
+func GetTaskMessage(ctx context.Context) (<-chan *Message, error) {
 	deliveryChan, err := mq.channel.Consume(
 		conf.Get().MQQueue, // 队列名
 		"",                 // 消费者标签
@@ -69,7 +70,7 @@ func GetTaskMessage(ctx context.Context) (<-chan string, error) {
 					continue
 				}
 
-				mq.messageChan <- info.Url
+				mq.messageChan <- info
 				logrus.Debugf("从 rabbitmq 队列中收到一个信息: %s", info.Url)
 			}
 		}
@@ -78,11 +79,11 @@ func GetTaskMessage(ctx context.Context) (<-chan string, error) {
 	return mq.messageChan, nil
 }
 
-func SendMessage(msgChan chan Message) error {
+func SendMessage(msgChan chan *Message) error {
 	publishQueue, err := mq.channel.QueueDeclare(
 		conf.Get().MQQueue, // 队列名
 		true,               // 是否持续
-		true,               // 是否自动删除
+		false,              // 是否自动删除
 		false,              // 是否独占
 		false,              // 是否阻塞
 		nil,                // args
