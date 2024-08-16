@@ -27,6 +27,8 @@ export MQ_QUEUE="test"
 export CONCURRENT=100
 # 每一个请求的最大超时时间，默认10秒
 export TIME_OUT_SECOND=10
+# 网页处理计数器，统计的时间间隔，单位是分钟
+export STATISTICS_INTERVAL_MINUTE=5
 # 是否需要保存日志，为空不保存，直接在控制台打印。可以填 "./logs/website-verification.log"
 export LOG_FILE=""
 # 日志等级：debug,info,warn,error,fatal,panic
@@ -60,6 +62,7 @@ services:
       MQ_QUEUE: "test"
       CONCURRENT: 100
       TIME_OUT_SECOND: 10
+      STATISTICS_INTERVAL_MINUTE: 5
       LOG_FILE: ""
       LOG_LEVEL: "info"
       LOG_SIZE: 100

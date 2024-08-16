@@ -39,6 +39,8 @@ func (counter *AtomicCounter) Run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			logrus.Infof("计时器停止")
+			logrus.Infof("程序结束前网页检测成功的个数: %d", counter.successCount)
+			logrus.Infof("程序结束前网页检测失败的个数: %d", counter.failCount)
 			return
 		case <-counter.ticker.C:
 			logrus.Infof("%v 时间内网页检测成功的个数: %d", counter.duration, counter.successCount)
