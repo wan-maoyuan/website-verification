@@ -43,6 +43,9 @@ func (counter *AtomicCounter) Run(ctx context.Context) {
 		case <-counter.ticker.C:
 			logrus.Infof("%v 时间内网页检测成功的个数: %d", counter.duration, counter.successCount)
 			logrus.Infof("%v 时间内网页检测失败的个数: %d", counter.duration, counter.failCount)
+
+			atomic.SwapInt64(&counter.successCount, 0)
+			atomic.SwapInt64(&counter.failCount, 0)
 		}
 	}
 }
